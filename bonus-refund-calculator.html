@@ -9,26 +9,15 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <style>
+  /* Страница всегда светлая, даже если в телефоне включена тёмная тема:
+     color-scheme не даёт браузеру перекрасить поля ввода и полосы прокрутки. */
   :root{
+    color-scheme: light;
     --bg:#f2f4f7; --card:#ffffff; --ink:#15181d; --muted:#616875;
     --line:#dfe3ea; --accent:#1f6feb; --accent-soft:#e8f0fe;
     --say:#0f7a50; --say-soft:#e7f5ee;
     --warn:#8a4f12; --warn-soft:#fdf1e1;
     --radius:14px;
-  }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --bg:#14161a; --card:#1c1f25; --ink:#edeff3; --muted:#9aa3b2;
-      --line:#2b303a; --accent:#6aa6ff; --accent-soft:#1c2a3e;
-      --say:#5dd6a0; --say-soft:#16302a;
-      --warn:#e0a663; --warn-soft:#33291b;
-    }
-  }
-  :root[data-theme="dark"]{
-    --bg:#14161a; --card:#1c1f25; --ink:#edeff3; --muted:#9aa3b2;
-    --line:#2b303a; --accent:#6aa6ff; --accent-soft:#1c2a3e;
-    --say:#5dd6a0; --say-soft:#16302a;
-    --warn:#e0a663; --warn-soft:#33291b;
   }
   *{box-sizing:border-box}
   body{
@@ -90,7 +79,7 @@
   </div>
 
   <div id="out"></div>
-  <p class="ver">Версия 1.3 · 22.09.2026</p>
+  <p class="ver">Версия 1.4 · 22.09.2026</p>
 </div>
 
 <script>
