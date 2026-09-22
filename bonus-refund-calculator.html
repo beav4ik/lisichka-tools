@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Возврат с бонусами</title>
+<meta name="theme-color" content="#33d127">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --bg:#f2f4f7; --card:#ffffff; --ink:#15181d; --muted:#616875;
+    --line:#dfe3ea; --accent:#1f6feb; --accent-soft:#e8f0fe;
+    --say:#0f7a50; --say-soft:#e7f5ee;
+    --warn:#8a4f12; --warn-soft:#fdf1e1;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161a; --card:#1c1f25; --ink:#edeff3; --muted:#9aa3b2;
+      --line:#2b303a; --accent:#6aa6ff; --accent-soft:#1c2a3e;
+      --say:#5dd6a0; --say-soft:#16302a;
+      --warn:#e0a663; --warn-soft:#33291b;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161a; --card:#1c1f25; --ink:#edeff3; --muted:#9aa3b2;
+    --line:#2b303a; --accent:#6aa6ff; --accent-soft:#1c2a3e;
+    --say:#5dd6a0; --say-soft:#16302a;
+    --warn:#e0a663; --warn-soft:#33291b;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:20px 16px 40px; background:var(--bg); color:var(--ink);
+    font:18px/1.6 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  }
+  .wrap{max-width:720px; margin:0 auto}
+  h1{font-size:24px; line-height:1.3; margin:0 0 20px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-bottom:16px}
+  h2{font-size:19px; margin:0 0 14px}
+  .fields{display:grid; gap:16px}
+  label{display:block; font-size:16px; color:var(--muted); margin-bottom:8px}
+  input[type=number]{
+    width:100%; padding:14px 16px; font-size:26px; font-weight:600;
+    font-variant-numeric:tabular-nums; text-align:right;
+    border:2px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink);
+  }
+  input[type=number]:focus{outline:none; border-color:var(--accent)}
+  .result{background:var(--accent-soft); border:1px solid var(--accent); border-radius:var(--radius); padding:20px; margin-bottom:16px}
+  .result .line{display:flex; justify-content:space-between; align-items:baseline; gap:16px; flex-wrap:wrap}
+  .result .line + .line{margin-top:14px; padding-top:14px; border-top:1px solid var(--line)}
+  .result .line span{font-size:17px}
+  .result .line b{font-size:30px; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .result .small b{font-size:22px}
+  ol{margin:0; padding-left:26px}
+  ol li{margin-bottom:12px}
+  ol li:last-child{margin-bottom:0}
+  .say{background:var(--say-soft); border:1px solid var(--say); border-radius:var(--radius); padding:20px; margin-bottom:16px}
+  .say h2{color:var(--say)}
+  .say p{margin:0 0 12px}
+  .say p:last-child{margin-bottom:0}
+  .warn{background:var(--warn-soft); border:1px solid var(--warn); color:var(--warn);
+        border-radius:var(--radius); padding:16px 18px; margin-bottom:16px; font-size:17px}
+  .ver{text-align:center; font-size:13px; color:var(--muted); margin:8px 0 0}
+  .back{display:inline-block; color:var(--accent); font-size:16px; text-decoration:none; margin-bottom:14px}
+  @media (min-width:560px){ .fields{grid-template-columns:1fr 1fr} .fields div:first-child{grid-column:1 / -1} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Все инструменты</a>
+  <h1>Возврат части заказа, если клиент платил бонусами</h1>
+
+  <div class="card">
+    <div class="fields">
+      <div>
+        <label for="total">Вся сумма заказа, руб.</label>
+        <input id="total" type="number" min="0" step="0.01" value="3000">
+      </div>
+      <div>
+        <label for="bonus">Из них оплачено бонусами, руб.</label>
+        <input id="bonus" type="number" min="0" step="0.01" value="900">
+      </div>
+      <div>
+        <label for="ret">Возвращаем услуг на сумму, руб.</label>
+        <input id="ret" type="number" min="0" step="0.01" value="1000">
+      </div>
+    </div>
+  </div>
+
+  <div id="out"></div>
+  <p class="ver">Версия 1.3 · 22.09.2026</p>
+</div>
+
+<script>
+/*
+  Расчёт: бонусную оплату можно снять только целиком, поэтому при частичном возврате
+  снимаем её всю, уменьшаем заказ и заново оплачиваем бонусами остаток — сохраняя
+  исходную пропорцию бонусов: B' = B * S' / S, округление вниз до целого рубля.
+  Подробности и обоснование — в tools/README.md.
+*/
+var LIMIT_PCT = 0.30;
+
+var $ = function (id) { return document.getElementById(id); };
+var toCents = function (v) { return Math.round((parseFloat(v) || 0) * 100); };
+var money = function (k) {
+  return (k / 100).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
+};
+// бонусы существуют только целыми рублями — всегда округляем вниз до рубля
+var toWholeRubles = function (k) { return k <= 0 ? 0 : Math.floor(k / 100) * 100; };
+
+function render() {
+  var S = toCents($('total').value);
+  var B = toCents($('bonus').value);
+  var R = toCents($('ret').value);
+
+  var stop = null;
+  if (S <= 0) stop = 'Впишите сумму заказа.';
+  else if (B > S) stop = 'Бонусами не может быть оплачено больше, чем стоит заказ. Проверьте вторую строку.';
+  else if (R > S) stop = 'Возвращаем больше, чем стоит заказ. Проверьте третью строку.';
+  else if (R <= 0) stop = 'Впишите сумму, которую возвращаем клиенту.';
+
+  if (stop) { $('out').innerHTML = '<div class="warn">' + stop + '</div>'; return; }
+
+  var moneyPaid = S - B;                                        // оплачено деньгами
+  var S2 = S - R;                                               // остаток заказа
+  var B2 = S2 <= 0 ? 0 : toWholeRubles(Math.floor(B * S2 / S)); // бонусами на остаток
+  var money2 = S2 - B2;                                         // деньгами на остаток
+  var cashBack = moneyPaid - money2;                            // выдать деньгами
+  var bonusBack = B - B2;                                       // останется бонусами
+
+  var html = '';
+
+  if (B > Math.floor(LIMIT_PCT * S) + 1) {
+    html += '<div class="warn">Похоже, бонусами оплачено больше 30 процентов заказа. ' +
+            'Проверьте две первые строки. Если суммы верные, считайте по расчёту ниже.</div>';
+  }
+
+  html +=
+    '<div class="result">' +
+      '<div class="line"><span>Выдать клиенту деньгами</span><b>' + money(cashBack) + '</b></div>' +
+      (bonusBack > 0
+        ? '<div class="line small"><span>Вернётся бонусами на счёт клиента</span><b>' + money(bonusBack) + '</b></div>'
+        : '') +
+    '</div>';
+
+  var steps = '';
+  if (B === 0) {
+    steps =
+      '<li>Оформить возврат услуг на ' + money(R) + '. Сумма заказа станет ' + money(S2) + '.</li>' +
+      '<li>Выдать клиенту ' + money(cashBack) + ' тем же способом, каким он платил: наличными из кассы ' +
+        'или возвратом на карту.</li>';
+  } else {
+    steps =
+      '<li>Отменить оплату бонусами полностью. На счёт клиента вернутся все ' + money(B) + ' бонусов. ' +
+        'Частично бонусы снять нельзя, поэтому снимаем все.</li>' +
+      '<li>Оформить возврат услуг на ' + money(R) + '. Сумма заказа станет ' + money(S2) + '.</li>' +
+      (S2 > 0
+        ? '<li>Снова оплатить бонусами ' + money(B2) + ' — это бонусы за те услуги, которые остаются у клиента.</li>'
+        : '<li>Заказ закрыт полностью, бонусами больше ничего оплачивать не нужно.</li>') +
+      '<li>Выдать клиенту ' + money(cashBack) + ' тем же способом, каким он платил: наличными из кассы ' +
+        'или возвратом на карту.</li>';
+  }
+
+  html += '<div class="card"><h2>Что сделать в программе</h2><ol>' + steps + '</ol></div>';
+
+  var say = '';
+
+  if (B === 0) {
+    say = '<p>«Ваш заказ был на ' + money(S) + ', бонусами он не оплачивался. ' +
+          'Мы возвращаем услуги на ' + money(R) + ', и эту сумму я верну вам деньгами полностью — ' +
+          money(cashBack) + ' тем же способом, каким вы платили.»</p>';
+    html += '<div class="say"><h2>Что сказать клиенту</h2>' + say + '</div>';
+    $('out').innerHTML = html;
+    return;
+  }
+
+  say += '<p>«Ваш заказ был на ' + money(S) + '. Из них ' + money(B) + ' вы оплатили бонусами, ' +
+         'а ' + money(moneyPaid) + ' — деньгами.</p>';
+
+  if (S2 > 0) {
+    say += '<p>Сейчас мы возвращаем услуги на ' + money(R) + '. Бонусы программа умеет возвращать ' +
+           'только все сразу, поэтому я сначала верну вам все ' + money(B) + ' бонусов на счёт, ' +
+           'а потом спишу ' + money(B2) + ' бонусов за те услуги, которые вы забираете.</p>';
+    if (bonusBack > 0) {
+      say += '<p>В итоге ' + money(bonusBack) + ' бонусов останутся у вас на счёте — ими можно ' +
+             'оплатить следующий заказ. А деньгами я верну вам ' + money(cashBack) + '.</p>';
+      say += '<p>Поэтому на руки получается ' + money(cashBack) + ', а не ' + money(R) + ': ' +
+             'разницу ' + money(bonusBack) + ' вы уже оплачивали не деньгами, а бонусами, ' +
+             'и они вернулись к вам бонусами же.»</p>';
+    } else {
+      say += '<p>Бонусы остаются в работе на оставшейся части заказа, а деньгами я верну вам ' +
+             money(cashBack) + ' — всю сумму возврата.»</p>';
+    }
+  } else {
+    say += '<p>Мы отменяем заказ целиком. Все ' + money(B) + ' бонусов вернутся к вам на счёт, ' +
+           'а деньгами я верну ' + money(cashBack) + ' — ровно столько, сколько вы платили ' +
+           'наличными или картой.»</p>';
+  }
+
+  html += '<div class="say"><h2>Что сказать клиенту</h2>' + say + '</div>';
+
+  $('out').innerHTML = html;
+}
+
+['total', 'bonus', 'ret'].forEach(function (id) {
+  $(id).addEventListener('input', render);
+  $(id).addEventListener('change', render);
+});
+render();
+
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Инструменты приёмщика</title>
+<meta name="theme-color" content="#33d127">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Инструменты">
+<style>
+  :root{
+    --bg:#f2f4f7; --card:#ffffff; --ink:#15181d; --muted:#616875;
+    --line:#dfe3ea; --brand:#33d127; --accent:#1f6feb; --accent-soft:#e8f0fe;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161a; --card:#1c1f25; --ink:#edeff3; --muted:#9aa3b2;
+      --line:#2b303a; --accent:#6aa6ff; --accent-soft:#1c2a3e;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161a; --card:#1c1f25; --ink:#edeff3; --muted:#9aa3b2;
+    --line:#2b303a; --accent:#6aa6ff; --accent-soft:#1c2a3e;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:24px 16px 40px; background:var(--bg); color:var(--ink);
+    font:18px/1.6 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  }
+  .wrap{max-width:640px; margin:0 auto}
+  .head{display:flex; align-items:center; gap:14px; margin-bottom:24px}
+  .head img{width:56px; height:56px; border-radius:14px; flex:none}
+  h1{font-size:23px; line-height:1.25; margin:0}
+  .head p{margin:2px 0 0; font-size:15px; color:var(--muted)}
+  a.tool{
+    display:block; text-decoration:none; color:inherit;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px; margin-bottom:14px;
+  }
+  a.tool:hover, a.tool:focus{border-color:var(--accent); outline:none}
+  a.tool strong{display:block; font-size:20px; margin-bottom:6px}
+  a.tool span{font-size:16px; color:var(--muted)}
+  .help{
+    display:block; text-decoration:none; color:var(--accent);
+    background:var(--accent-soft); border:1px solid var(--accent); border-radius:var(--radius);
+    padding:16px 20px; font-size:16px; margin-top:24px;
+  }
+  .ver{text-align:center; font-size:13px; color:var(--muted); margin:24px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <img src="icons/icon-192.png" alt="">
+    <div>
+      <h1>Инструменты приёмщика</h1>
+      <p>Химчистка «Лисичка»</p>
+    </div>
+  </div>
+
+  <a class="tool" href="bonus-refund-calculator.html">
+    <strong>Возврат части заказа с бонусами</strong>
+    <span>Сколько денег выдать клиенту, что сделать в программе и что ему сказать</span>
+  </a>
+
+  <a class="help" href="kak-dobavit-na-telefon.html">Как добавить эту страницу на экран телефона</a>
+
+  <p class="ver">Обновлено 22.09.2026</p>
+</div>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</body>
+</html>
