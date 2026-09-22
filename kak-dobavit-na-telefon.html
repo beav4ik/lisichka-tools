@@ -40,6 +40,7 @@
   .note{background:var(--accent-soft); border:1px solid var(--accent); border-radius:var(--radius);
         padding:16px 20px; font-size:16px; margin-bottom:16px}
   .back{display:inline-block; margin-top:8px; color:var(--accent); font-size:16px}
+  .ver{text-align:center; font-size:13px; color:var(--muted); margin:20px 0 0}
 </style>
 </head>
 <body>
@@ -86,10 +87,20 @@
   </div>
 
   <a class="back" href="index.html">← Вернуться к списку инструментов</a>
+  <p class="ver">Обновлено 22.09.2026 11:24</p>
 </div>
 <script>
+  // Штамп времени подставляет скрипт публикации; если он остался на месте —
+  // страницу открыли из папки разработчика, а не с сайта.
+  (function () {
+    var ver = document.querySelector('.ver');
+    if (ver && ver.textContent.indexOf('22.09.2026 11:24') !== -1) ver.textContent = 'Локальная копия, не с сайта';
+  })();
+
+  // updateViaCache: 'none' — сам sw.js тоже берётся с сервера, а не из кэша браузера.
   if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
-    navigator.serviceWorker.register('sw.js');
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then(function (reg) { reg.update(); });
   }
 </script>
 </body>

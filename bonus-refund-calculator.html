@@ -79,7 +79,7 @@
   </div>
 
   <div id="out"></div>
-  <p class="ver">Версия 1.4 · 22.09.2026</p>
+  <p class="ver">Версия 1.5 · обновлено 22.09.2026 11:24</p>
 </div>
 
 <script>
@@ -199,8 +199,18 @@ function render() {
 });
 render();
 
+// Штамп времени подставляет скрипт публикации. Если он на месте — страницу
+// открыли не с сайта, а из папки разработчика.
+(function () {
+  var ver = document.querySelector('.ver');
+  if (ver) ver.textContent = ver.textContent.replace('обновлено 22.09.2026 11:24', 'локальная копия');
+})();
+
+// updateViaCache: 'none' — сам sw.js тоже берётся с сервера, а не из кэша браузера,
+// иначе исправления в воркере доходили бы с задержкой до суток.
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
-  navigator.serviceWorker.register('sw.js');
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+    .then(function (reg) { reg.update(); });
 }
 </script>
 </body>
